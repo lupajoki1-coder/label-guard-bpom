@@ -314,7 +314,10 @@
         <div id="image-preview-container">
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border);">
                 <h4 style="font-size: 0.9rem; color: var(--text-main);">Foto Terpilih</h4>
-                <button id="remove-image" style="background: none; border: none; color: var(--danger); font-weight: 600; cursor: pointer; font-size: 0.85rem;">Hapus Semua</button>
+                <div style="display: flex; gap: 12px;">
+                    <button id="add-more-image" style="background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 0.85rem;">+ Tambah</button>
+                    <button id="remove-image" style="background: none; border: none; color: var(--danger); font-weight: 600; cursor: pointer; font-size: 0.85rem;">Hapus Semua</button>
+                </div>
             </div>
             <div id="preview-gallery" style="display: flex; gap: 8px; overflow-x: auto; padding: 16px; scroll-snap-type: x mandatory;">
                 <!-- Thumbnails go here -->
@@ -346,15 +349,20 @@
                 </div>
             </div>
 
-            <!-- Konsultan Ekstra Insights -->
+            <!-- Executive Summary Table -->
             <div id="extra-insights" style="display:none; flex-direction: column; gap: 16px;">
-                <div style="background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 12px; padding: 16px;">
-                    <h3 style="color: #991B1B; margin-bottom: 8px; font-size: 1rem; display: flex; align-items: center; gap: 6px;">⚠️ Pelanggaran Regulasi</h3>
-                    <ul id="violations-list" style="color: #7F1D1D; font-size: 0.85rem; padding-left: 16px; margin: 0;"></ul>
-                </div>
-                <div style="background: #F0FDFA; border: 1px solid #5EEAD4; border-radius: 12px; padding: 16px;">
-                    <h3 style="color: #115E59; margin-bottom: 8px; font-size: 1rem; display: flex; align-items: center; gap: 6px;">💼 Rekomendasi Konsultan</h3>
-                    <ul id="recommendations-list" style="color: #134E4A; font-size: 0.85rem; padding-left: 16px; margin: 0;"></ul>
+                <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <table style="width: 100%; border-collapse: collapse; background: white; text-align: left; font-size: 0.85rem;">
+                        <thead style="background: var(--text-main); border-bottom: 2px solid var(--border);">
+                            <tr>
+                                <th style="padding: 14px; color: white; font-weight: 700; width: 1%; white-space: nowrap; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">📋 Kategori</th>
+                                <th style="padding: 14px; color: white; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">⚖️ Temuan & Referensi Regulasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="executive-table-body">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -380,6 +388,7 @@
     const previewContainer = document.getElementById('image-preview-container');
     const previewGallery = document.getElementById('preview-gallery');
     const removeImageBtn = document.getElementById('remove-image');
+    const addMoreImageBtn = document.getElementById('add-more-image');
     const btnAnalyze = document.getElementById('btn-analyze');
     const loadingState = document.getElementById('loading-state');
     const resultsSection = document.getElementById('results-section');
@@ -415,6 +424,9 @@
                 img.style.flexShrink = '0';
                 previewGallery.appendChild(img);
             }
+            
+            // Clear input value so same files can be re-selected if needed
+            event.target.value = '';
         }
     };
 
@@ -431,6 +443,10 @@
     }
 
     removeImageBtn.addEventListener('click', resetInputs);
+
+    addMoreImageBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
 
     btnReset.addEventListener('click', () => {
         resultsSection.style.display = 'none';
@@ -496,30 +512,49 @@
             document.getElementById('result-thumbnail').src = currentImages[0].dataUrl;
         }
 
-        // Render Violations & Recommendations
+        // Render Executive Summary Table
         const extraInsights = document.getElementById('extra-insights');
-        const vList = document.getElementById('violations-list');
-        const rList = document.getElementById('recommendations-list');
+        const tbody = document.getElementById('executive-table-body');
+        tbody.innerHTML = '';
         
-        vList.innerHTML = '';
-        rList.innerHTML = '';
-        
+        // Render Violations
         if (result.violations && result.violations.length > 0) {
             result.violations.forEach(v => {
-                const li = document.createElement('li'); li.innerText = v; li.style.marginBottom = '4px';
-                vList.appendChild(li);
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                tr.innerHTML = `
+                    <td style="padding: 16px; vertical-align: top; background: #FEF2F2; border-right: 1px dashed var(--border);">
+                        <span style="background: #FECACA; color: #991B1B; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #F87171; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">🚨 PELANGGARAN</span>
+                    </td>
+                    <td style="padding: 16px; vertical-align: middle; color: #7F1D1D; font-weight: 500; line-height: 1.6; background: #FEF2F2;">${v}</td>
+                `;
+                tbody.appendChild(tr);
             });
         } else {
-            vList.innerHTML = '<li>Tidak ada pelanggaran mayor terdeteksi.</li>';
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--border)';
+            tr.innerHTML = `
+                <td style="padding: 16px; vertical-align: top; background: #F0FDF4; border-right: 1px dashed var(--border);">
+                    <span style="background: #BBF7D0; color: #166534; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #4ADE80; box-shadow: 0 2px 4px rgba(34,197,94,0.1);">✅ COMPLIANT</span>
+                </td>
+                <td style="padding: 16px; vertical-align: middle; color: #166534; font-weight: 600; line-height: 1.6; background: #F0FDF4;">Tidak ditemukan pelanggaran regulasi mayor. Label memenuhi standar.</td>
+            `;
+            tbody.appendChild(tr);
         }
 
+        // Render Recommendations
         if (result.consultant_recommendations && result.consultant_recommendations.length > 0) {
             result.consultant_recommendations.forEach(r => {
-                const li = document.createElement('li'); li.innerText = r; li.style.marginBottom = '4px';
-                rList.appendChild(li);
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                tr.innerHTML = `
+                    <td style="padding: 16px; vertical-align: top; background: #F0FDFA; border-right: 1px dashed var(--border);">
+                        <span style="background: #CCFBF1; color: #115E59; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #2DD4BF; box-shadow: 0 2px 4px rgba(20,184,166,0.1);">💡 REKOMENDASI</span>
+                    </td>
+                    <td style="padding: 16px; vertical-align: middle; color: #134E4A; font-weight: 500; line-height: 1.6; background: #F0FDFA;">${r}</td>
+                `;
+                tbody.appendChild(tr);
             });
-        } else {
-            rList.innerHTML = '<li>Lanjutkan dengan proses QA standar.</li>';
         }
         
         extraInsights.style.display = 'flex';
@@ -569,48 +604,49 @@
         
         let yPos = 80;
         
-        // Pelanggaran Regulasi
-        if(lastResult.violations && lastResult.violations.length > 0) {
-            doc.setFontSize(12);
-            doc.setTextColor(220, 38, 38);
-            doc.setFont("helvetica", "bold");
-            doc.text("PELANGGARAN REGULASI:", 14, yPos);
-            yPos += 8;
-            
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.setTextColor(30, 41, 59);
-            
+        // PDF AutoTable for Concise Summary
+        let tableData = [];
+        
+        if (lastResult.violations && lastResult.violations.length > 0) {
             lastResult.violations.forEach(v => {
-                const textLines = doc.splitTextToSize(`- ${v}`, 180);
-                doc.text(textLines, 14, yPos);
-                yPos += (textLines.length * 5) + 2;
-                if(yPos > 270) { doc.addPage(); yPos = 20; }
+                tableData.push(['PELANGGARAN', v]);
             });
-            yPos += 5;
+        } else {
+            tableData.push(['COMPLIANT', 'Tidak ditemukan pelanggaran regulasi mayor. Label memenuhi standar.']);
         }
-
-        // Rekomendasi Konsultan
-        if(lastResult.consultant_recommendations && lastResult.consultant_recommendations.length > 0) {
-            if(yPos > 250) { doc.addPage(); yPos = 20; }
-            doc.setFontSize(12);
-            doc.setTextColor(15, 118, 110);
-            doc.setFont("helvetica", "bold");
-            doc.text("REKOMENDASI KONSULTAN BISNIS:", 14, yPos);
-            yPos += 8;
-            
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.setTextColor(30, 41, 59);
-            
+        
+        if (lastResult.consultant_recommendations && lastResult.consultant_recommendations.length > 0) {
             lastResult.consultant_recommendations.forEach(r => {
-                const textLines = doc.splitTextToSize(`- ${r}`, 180);
-                doc.text(textLines, 14, yPos);
-                yPos += (textLines.length * 5) + 2;
-                if(yPos > 270) { doc.addPage(); yPos = 20; }
+                tableData.push(['REKOMENDASI', r]);
             });
-            yPos += 10;
         }
+        
+        doc.autoTable({
+            startY: yPos,
+            head: [['KATEGORI', 'TEMUAN & REFERENSI REGULASI']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, halign: 'center' },
+            styles: { fontSize: 10, cellPadding: 6 },
+            columnStyles: {
+                0: { cellWidth: 40, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+                1: { cellWidth: 142, valign: 'middle' }
+            },
+            didParseCell: function (data) {
+                if (data.section === 'body') {
+                    if (data.cell.raw === 'PELANGGARAN' && data.column.index === 0) {
+                        data.cell.styles.textColor = [153, 27, 27];
+                        data.cell.styles.fillColor = [254, 226, 226];
+                    } else if (data.cell.raw === 'COMPLIANT' && data.column.index === 0) {
+                        data.cell.styles.textColor = [22, 101, 52];
+                        data.cell.styles.fillColor = [220, 252, 231];
+                    } else if (data.cell.raw === 'REKOMENDASI' && data.column.index === 0) {
+                        data.cell.styles.textColor = [17, 94, 89];
+                        data.cell.styles.fillColor = [204, 251, 241];
+                    }
+                }
+            }
+        });
 
         // Tabel rincian dihapus agar laporan sangat ringkas
         
