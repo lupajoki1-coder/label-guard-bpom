@@ -14,24 +14,41 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Gambar tidak ditemukan dalam request.' });
     }
 
-    const prompt = `Anda adalah inspektur kepatuhan BPOM Indonesia. Evaluasi gambar label pangan ini secara ketat berdasarkan 10 kriteria wajib berikut:
-1. Nama Produk (Dagang & Jenis)
-2. Daftar Bahan (Komposisi)
-3. Berat Bersih/Isi Bersih
-4. Nama & Alamat Produsen/Importir
-5. Logo Halal (jika ada)
-6. Tanggal/Kode Produksi
-7. Keterangan Kedaluwarsa (Exp Date)
-8. Nomor Izin Edar (BPOM/P-IRT)
-9. Informasi Nilai Gizi (Nutrition Facts)
-10. Peringatan (alergen/lainnya)
+    const prompt = `Anda adalah Konsultan Hukum & Bisnis Korporasi Senior spesialis Kepatuhan Regulasi Pangan BPOM (PerBPOM No 31/2018, PerBPOM No 26/2021, dll).
+Tugas Anda: Melakukan audit kepatuhan label pangan secara SANGAT KETAT, TERPERINCI, dan TANPA TOLERANSI (zero-tolerance) terhadap kesalahan visual.
 
-KEMBALIKAN HANYA JSON MURNI (tanpa markdown \`\`\`json) dengan struktur persis seperti ini:
+Kriteria Wajib (Berdasarkan Aturan Baku):
+1. Nama Produk (Trade name & Jenis Pangan)
+2. Daftar Bahan (Komposisi lengkap & identifikasi Alergen)
+3. Berat Bersih/Isi Bersih (Sistem metrik wajib)
+4. Nama & Alamat Produsen/Importir (Minimal nama PT/CV, kota & negara)
+5. Logo Halal (Bagi yang wajib/mengklaim)
+6. Tanggal & Kode Produksi (Traceability wajib ada)
+7. Keterangan Kedaluwarsa (Exp Date, format harus jelas)
+8. Nomor Izin Edar (BPOM RI MD/ML atau P-IRT harus tervalidasi formatnya)
+9. Informasi Nilai Gizi / Nutrition Facts (Tabel format standar BPOM)
+10. Peringatan Khusus (Alergen, Pemanis Buatan, dll jika relevan)
+
+Instruksi Output Konsultan:
+- Analisis setiap poin dengan kejelian tingkat auditor senior.
+- Catat SETIAP pelanggaran regulasi sekecil apapun (font tidak terbaca, posisi salah, format nomor salah).
+- Berikan rekomendasi strategis bisnis korporat untuk mitigasi risiko hukum, penarikan produk (recall), dan peningkatan branding/kepercayaan konsumen.
+
+KEMBALIKAN HANYA JSON MURNI (tanpa markdown \`\`\`json) dengan struktur:
 {
+  "product_name": "<Nama Produk yang terdeteksi, atau 'Unknown'>",
   "score": <angka_0_100>,
-  "level": "<Tinggi/Sedang/Rendah>",
+  "level": "<Aman / Risiko Sedang / Risiko Tinggi>",
+  "violations": [
+    "<Detail pelanggaran regulasi 1, atau kosongkan jika sempurna>",
+    "<Detail pelanggaran regulasi 2>"
+  ],
+  "consultant_recommendations": [
+    "<Saran strategis bisnis 1 (Misal: Risiko denda administratif...)>",
+    "<Saran strategis bisnis 2>"
+  ],
   "details": [
-    {"item": "Nama Produk", "status": true/false, "notes": "alasan singkat"}
+    {"item": "Nama Produk", "status": true/false, "notes": "Analisis terperinci..."}
   ]
 }`;
 
