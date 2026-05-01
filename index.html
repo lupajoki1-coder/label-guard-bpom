@@ -28,7 +28,720 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
+            display: flex;<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluasi Kepatuhan Label Pangan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0F766E; /* Teal color for trust and health */
+            --primary-light: #14B8A6;
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --success: #22C55E;
+            --danger: #EF4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 480px; /* Mobile optimized width */
+            background-color: var(--card-bg);
+            min-height: 100vh;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            padding: 24px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            box-shadow: 0 4px 15px rgba(15, 118, 110, 0.2);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 24px 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: #F1F5F9;
+            border: 2px dashed #CBD5E1;
+            border-radius: 16px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: #F0FDFA;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .upload-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px -1px rgba(15, 118, 110, 0.2);
+            transition: transform 0.2s;
+            margin-top: 16px;
+        }
+
+        .upload-btn:active {
+            transform: scale(0.98);
+        }
+
+        .upload-btn.camera {
+            background-color: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        /* Hidden inputs */
+        #file-input, #camera-input {
+            display: none;
+        }
+
+        /* Preview Section */
+        #image-preview-container {
+            display: none;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            background: white;
+        }
+
+        #image-preview {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #remove-image {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Loading State */
+        .loading-state {
+            display: none;
+            text-align: center;
+            padding: 40px 0;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #E2E8F0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results Section (Hidden initially) */
+        .results-section {
+            display: none; /* Changed via JS */
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(var(--success) 85%, #E2E8F0 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: "";
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .score-value {
+            position: relative;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .details-list {
+            list-style: none;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .details-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        .details-list li:last-child {
+            border-bottom: none;
+        }
+
+        .icon-check { color: var(--success); font-weight: bold; font-size: 1.2rem; }
+        .icon-cross { color: var(--danger); font-weight: bold; font-size: 1.2rem; }
+
+        .btn-download {
+            background-color: var(--text-main);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        
+        .action-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mobile-container">
+    <div class="header">
+        <h1>LabelGuard Analytics</h1>
+        <p>Sistem Audit Kepatuhan Label Pangan</p>
+    </div>
+
+    <div class="content">
+        <!-- Initial Upload Area -->
+        <div id="upload-area" class="action-container">
+            <div class="upload-section" onclick="document.getElementById('file-input').click()">
+                <div class="upload-icon">📄</div>
+                <h3 style="margin-bottom: 8px;">Unggah Foto Label</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Format JPG/PNG. Pastikan teks terbaca jelas.</p>
+            </div>
+            
+            <button class="upload-btn camera" onclick="document.getElementById('camera-input').click()">
+                📷 Ambil Foto Langsung
+            </button>
+
+            <!-- Inputs (Hidden) -->
+            <input type="file" id="file-input" accept="image/*" multiple>
+            <!-- Capture attribute opens the camera directly on mobile -->
+            <input type="file" id="camera-input" accept="image/*" capture="environment" multiple>
+        </div>
+
+        <!-- Image Preview Area -->
+        <div id="image-preview-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border);">
+                <h4 style="font-size: 0.9rem; color: var(--text-main);">Foto Terpilih</h4>
+                <div style="display: flex; gap: 12px;">
+                    <button id="add-more-image" style="background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 0.85rem;">+ Tambah</button>
+                    <button id="remove-image" style="background: none; border: none; color: var(--danger); font-weight: 600; cursor: pointer; font-size: 0.85rem;">Hapus Semua</button>
+                </div>
+            </div>
+            <div id="preview-gallery" style="display: flex; gap: 8px; overflow-x: auto; padding: 16px; scroll-snap-type: x mandatory;">
+                <!-- Thumbnails go here -->
+            </div>
+            
+            <!-- Input Halal Manual -->
+            <div style="padding: 0 16px 16px 16px;">
+                <label for="manual-halal-input" style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: block;">🔍 Input Nomor Halal (Opsional)</label>
+                <input type="text" id="manual-halal-input" placeholder="Contoh: ID123456789..." style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; transition: border 0.3s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">Ketik manual jika nomor pada kemasan buram. AI akan merangkai datanya secara cerdas.</p>
+            </div>
+
+            <button class="upload-btn" id="btn-analyze" style="margin: 0 16px 16px 16px; width: calc(100% - 32px);">
+                🔍 Analisis Label Sekarang
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state" id="loading-state">
+            <div class="spinner"></div>
+            <h3>Menjalankan Proses Audit...</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">Memvalidasi parameter visual dengan matriks regulasi BPOM & BPJPH</p>
+        </div>
+
+        <!-- Results Section (Hidden until analysis is complete) -->
+        <div class="results-section" id="results-section">
+            <div class="score-card">
+                <div style="display: flex; gap: 16px; align-items: center; justify-content: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                    <img id="result-thumbnail" src="" style="width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="text-align: left;">
+                        <h2 id="score-title" style="margin-bottom: 4px; font-size: 1.1rem;">Tingkat Kepatuhan</h2>
+                        <p id="score-desc" class="score-label" style="font-size: 0.8rem;">Menganalisis hasil...</p>
+                    </div>
+                </div>
+                <div class="score-circle">
+                    <span class="score-value">0</span>
+                </div>
+            </div>
+
+            <!-- Executive Summary Table -->
+            <div id="extra-insights" style="display:none; flex-direction: column; gap: 16px;">
+                <!-- Halal Verifier UI -->
+                <div id="halal-verifier-box" style="display:none; background: #FAF5FF; border: 1px solid #D8B4FE; border-radius: 12px; padding: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.05);">
+                    <div>
+                        <h3 style="color: #6B21A8; font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">☪️ Sertifikasi Halal Terdeteksi</h3>
+                        <p id="halal-cert-text" style="color: #7E22CE; font-size: 0.85rem; font-weight: 600;">Nomor: -</p>
+                    </div>
+                    <a id="btn-verify-halal" href="https://bpjph.halal.go.id/" target="_blank" style="background: #9333EA; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(147, 51, 234, 0.2); white-space: nowrap; transition: all 0.2s;">Verifikasi BPJPH ↗</a>
+                </div>
+
+                <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <table style="width: 100%; border-collapse: collapse; background: white; text-align: left; font-size: 0.85rem; table-layout: fixed;">
+                        <thead style="background: var(--text-main); border-bottom: 2px solid var(--border);">
+                            <tr>
+                                <th style="padding: 14px; color: white; font-weight: 700; width: 35%; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">📋 Kategori</th>
+                                <th style="padding: 14px; color: white; font-weight: 700; width: 65%; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">⚖️ Temuan & Referensi Regulasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="executive-table-body">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Rincian tabel dihapus agar laporan lebih ringkas sesuai permintaan -->
+
+            <button class="btn-download" id="btn-download-pdf">
+                📥 Unduh Laporan (PDF)
+            </button>
+            <button class="upload-btn camera" id="btn-reset" style="margin-top: 0;">
+                Cek Label Lainnya
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script>
+    // Elements
+    const fileInput = document.getElementById('file-input');
+    const cameraInput = document.getElementById('camera-input');
+    const uploadArea = document.getElementById('upload-area');
+    const previewContainer = document.getElementById('image-preview-container');
+    const previewGallery = document.getElementById('preview-gallery');
+    const removeImageBtn = document.getElementById('remove-image');
+    const addMoreImageBtn = document.getElementById('add-more-image');
+    const btnAnalyze = document.getElementById('btn-analyze');
+    const loadingState = document.getElementById('loading-state');
+    const resultsSection = document.getElementById('results-section');
+    const btnReset = document.getElementById('btn-reset');
+
+    let currentImages = []; // Array of { dataUrl, base64 }
+    let lastResult = null;
+
+    // Handle File Selection
+    const handleFileSelect = async (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length > 0) {
+            uploadArea.style.display = 'none';
+            previewContainer.style.display = 'block';
+            
+            for(let file of files) {
+                const dataUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+                
+                const base64 = dataUrl.split(',')[1];
+                currentImages.push({ dataUrl, base64 });
+                
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.scrollSnapAlign = 'start';
+                img.style.flexShrink = '0';
+                previewGallery.appendChild(img);
+            }
+            
+            // Clear input value so same files can be re-selected if needed
+            event.target.value = '';
+        }
+    };
+
+    fileInput.addEventListener('change', handleFileSelect);
+    cameraInput.addEventListener('change', handleFileSelect);
+
+    const resetInputs = () => {
+        uploadArea.style.display = 'flex';
+        previewContainer.style.display = 'none';
+        previewGallery.innerHTML = '';
+        currentImages = [];
+        fileInput.value = '';
+        cameraInput.value = '';
+        document.getElementById('manual-halal-input').value = '';
+    }
+
+    removeImageBtn.addEventListener('click', resetInputs);
+
+    addMoreImageBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    btnReset.addEventListener('click', () => {
+        resultsSection.style.display = 'none';
+        resetInputs();
+    });
+
+    // Analyze Label with Vercel Serverless Function
+    btnAnalyze.addEventListener('click', async () => {
+        if (currentImages.length === 0) {
+            alert('Silakan unggah atau ambil foto label terlebih dahulu.');
+            return;
+        }
+
+        previewContainer.style.display = 'none';
+        loadingState.style.display = 'flex';
+
+        try {
+            const manualHalal = document.getElementById('manual-halal-input').value.trim();
+            const base64Array = currentImages.map(img => img.base64);
+            const response = await fetch(`/api/analyze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    images: base64Array,
+                    manualHalal: manualHalal
+                })
+            });
+
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Terjadi kesalahan pada server.');
+            }
+
+            lastResult = result;
+            renderResults(result);
+
+        } catch (error) {
+            alert('Terjadi kesalahan: ' + error.message);
+            loadingState.style.display = 'none';
+            previewContainer.style.display = 'block'; // Show preview back on error
+        }
+    });
+
+    function renderResults(result) {
+        loadingState.style.display = 'none';
+        resultsSection.style.display = 'flex';
+
+        // Update Score
+        document.querySelector('.score-value').innerText = result.score;
+        document.getElementById('score-title').innerText = `Kepatuhan: ${result.level}`;
+        document.getElementById('score-desc').innerText = `Skor audit label mencapai ${result.score}/100`;
+
+        // Update Circle Color
+        let color = 'var(--danger)';
+        if (result.score >= 80) color = 'var(--success)';
+        else if (result.score >= 50) color = '#F59E0B'; // yellow/orange
+        
+        document.querySelector('.score-circle').style.background = `conic-gradient(${color} ${result.score}%, #E2E8F0 0)`;
+        
+        // Set Thumbnail
+        if (currentImages.length > 0) {
+            document.getElementById('result-thumbnail').src = currentImages[0].dataUrl;
+        }
+
+        // Render Executive Summary Table
+        const extraInsights = document.getElementById('extra-insights');
+        const tbody = document.getElementById('executive-table-body');
+        tbody.innerHTML = '';
+        
+        // Render Halal Verifier
+        const halalBox = document.getElementById('halal-verifier-box');
+        if (result.halal_cert_number && result.halal_cert_number !== 'null' && result.halal_cert_number !== '') {
+            document.getElementById('halal-cert-text').innerText = `Nomor: ${result.halal_cert_number}`;
+            halalBox.style.display = 'flex';
+        } else {
+            halalBox.style.display = 'none';
+        }
+
+        // Render Violations
+        if (result.violations && result.violations.length > 0) {
+            result.violations.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                tr.innerHTML = `
+                    <td style="padding: 16px; vertical-align: top; background: #FEF2F2; border-right: 1px dashed var(--border); word-break: break-word;">
+                        <span style="background: #FECACA; color: #991B1B; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #F87171; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">🚨 PELANGGARAN</span>
+                    </td>
+                    <td style="padding: 16px; vertical-align: middle; color: #7F1D1D; font-weight: 500; line-height: 1.6; background: #FEF2F2; word-break: break-word;">${v}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--border)';
+            tr.innerHTML = `
+                <td style="padding: 16px; vertical-align: top; background: #F0FDF4; border-right: 1px dashed var(--border); word-break: break-word;">
+                    <span style="background: #BBF7D0; color: #166534; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #4ADE80; box-shadow: 0 2px 4px rgba(34,197,94,0.1);">✅ COMPLIANT</span>
+                </td>
+                <td style="padding: 16px; vertical-align: middle; color: #166534; font-weight: 600; line-height: 1.6; background: #F0FDF4; word-break: break-word;">Tidak ditemukan pelanggaran regulasi mayor. Label memenuhi standar.</td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // Render Recommendations
+        if (result.consultant_recommendations && result.consultant_recommendations.length > 0) {
+            result.consultant_recommendations.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                tr.innerHTML = `
+                    <td style="padding: 16px; vertical-align: top; background: #F0FDFA; border-right: 1px dashed var(--border); word-break: break-word;">
+                        <span style="background: #CCFBF1; color: #115E59; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #2DD4BF; box-shadow: 0 2px 4px rgba(20,184,166,0.1);">💡 REKOMENDASI</span>
+                    </td>
+                    <td style="padding: 16px; vertical-align: middle; color: #134E4A; font-weight: 500; line-height: 1.6; background: #F0FDFA; word-break: break-word;">${r}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        extraInsights.style.display = 'flex';
+
+    }
+
+    // Generate PDF Logic
+    document.getElementById('btn-download-pdf').addEventListener('click', () => {
+        if (!lastResult) return;
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.setTextColor(15, 118, 110);
+        doc.text("LAPORAN AUDIT KEPATUHAN LABEL PANGAN", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 116, 139);
+        doc.text("Tanggal Audit: " + new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }), 14, 27);
+        doc.text("Penerbit: Divisi Kepatuhan Regulasi Internal", 14, 32);
+        
+        try {
+            if (currentImages.length > 0) {
+                // Attempt to embed the preview image, keep it small (30x30)
+                doc.addImage(currentImages[0].dataUrl, 'JPEG', 165, 12, 30, 30);
+            }
+        } catch(e) {
+            console.log("Gambar gagal dirender ke PDF");
+        }
+
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(226, 232, 240);
+        doc.line(14, 45, 196, 45);
+        
+        // Score Summary
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 41, 59);
+        doc.text(`Tingkat Kepatuhan: ${lastResult.level}`, 14, 55);
+        doc.text(`Skor Keseluruhan: ${lastResult.score} / 100`, 14, 63);
+        
+        if (lastResult.halal_cert_number && lastResult.halal_cert_number !== 'null' && lastResult.halal_cert_number !== '') {
+            doc.setFontSize(11);
+            doc.setTextColor(107, 33, 168); // Purple color
+            doc.text(`Sertifikasi Halal Terdeteksi: ${lastResult.halal_cert_number}`, 14, 71);
+            doc.line(14, 76, 196, 76);
+            var yPos = 86;
+        } else {
+            doc.line(14, 70, 196, 70);
+            var yPos = 80;
+        }
+        
+        // PDF AutoTable for Concise Summary
+        let tableData = [];
+        
+        if (lastResult.violations && lastResult.violations.length > 0) {
+            lastResult.violations.forEach(v => {
+                tableData.push(['PELANGGARAN', v]);
+            });
+        } else {
+            tableData.push(['COMPLIANT', 'Tidak ditemukan pelanggaran regulasi mayor. Label memenuhi standar.']);
+        }
+        
+        if (lastResult.consultant_recommendations && lastResult.consultant_recommendations.length > 0) {
+            lastResult.consultant_recommendations.forEach(r => {
+                tableData.push(['REKOMENDASI', r]);
+            });
+        }
+        
+        doc.autoTable({
+            startY: yPos,
+            head: [['KATEGORI', 'TEMUAN & REFERENSI REGULASI']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, halign: 'center' },
+            styles: { fontSize: 10, cellPadding: 6, overflow: 'linebreak' },
+            columnStyles: {
+                0: { cellWidth: 40, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+                1: { cellWidth: 142, valign: 'middle' }
+            },
+            didParseCell: function (data) {
+                if (data.section === 'body') {
+                    if (data.cell.raw === 'PELANGGARAN' && data.column.index === 0) {
+                        data.cell.styles.textColor = [153, 27, 27];
+                        data.cell.styles.fillColor = [254, 226, 226];
+                    } else if (data.cell.raw === 'COMPLIANT' && data.column.index === 0) {
+                        data.cell.styles.textColor = [22, 101, 52];
+                        data.cell.styles.fillColor = [220, 252, 231];
+                    } else if (data.cell.raw === 'REKOMENDASI' && data.column.index === 0) {
+                        data.cell.styles.textColor = [17, 94, 89];
+                        data.cell.styles.fillColor = [204, 251, 241];
+                    }
+                }
+            }
+        });
+
+        // Tabel rincian dihapus agar laporan sangat ringkas
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for(let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100);
+            doc.text(`Halaman ${i} dari ${pageCount} - Laporan Rahasia (Confidential) | Diterbitkan oleh: Konsultan Eksekutif Kepatuhan Korporasi`, 14, 290);
+        }
+        
+        // Dynamic Filename
+        let prodName = lastResult.product_name || "Label_Pangan";
+        prodName = prodName.replace(/[^a-zA-Z0-9]/g, '_'); // sanitize name
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        
+        const filename = `${prodName}_${y}${m}${d}_${h}${min}.pdf`;
+        doc.save(filename);
+    });
+</script>
+</body>
+</html>
+
             justify-content: center;
             min-height: 100vh;
         }
