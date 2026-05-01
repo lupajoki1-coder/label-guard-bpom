@@ -336,6 +336,18 @@
                 <p id="score-desc" class="score-label">Menganalisis hasil...</p>
             </div>
 
+            <!-- Konsultan Ekstra Insights -->
+            <div id="extra-insights" style="display:none; flex-direction: column; gap: 16px;">
+                <div style="background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 12px; padding: 16px;">
+                    <h3 style="color: #991B1B; margin-bottom: 8px; font-size: 1rem; display: flex; align-items: center; gap: 6px;">⚠️ Pelanggaran Regulasi</h3>
+                    <ul id="violations-list" style="color: #7F1D1D; font-size: 0.85rem; padding-left: 16px; margin: 0;"></ul>
+                </div>
+                <div style="background: #F0FDFA; border: 1px solid #5EEAD4; border-radius: 12px; padding: 16px;">
+                    <h3 style="color: #115E59; margin-bottom: 8px; font-size: 1rem; display: flex; align-items: center; gap: 6px;">💼 Rekomendasi Konsultan</h3>
+                    <ul id="recommendations-list" style="color: #134E4A; font-size: 0.85rem; padding-left: 16px; margin: 0;"></ul>
+                </div>
+            </div>
+
             <ul class="details-list" id="details-list">
                 <!-- Data will be injected here by JS -->
             </ul>
@@ -454,16 +466,46 @@
         
         document.querySelector('.score-circle').style.background = `conic-gradient(${color} ${result.score}%, #E2E8F0 0)`;
 
+        // Render Violations & Recommendations
+        const extraInsights = document.getElementById('extra-insights');
+        const vList = document.getElementById('violations-list');
+        const rList = document.getElementById('recommendations-list');
+        
+        vList.innerHTML = '';
+        rList.innerHTML = '';
+        
+        if (result.violations && result.violations.length > 0) {
+            result.violations.forEach(v => {
+                const li = document.createElement('li'); li.innerText = v; li.style.marginBottom = '4px';
+                vList.appendChild(li);
+            });
+        } else {
+            vList.innerHTML = '<li>Tidak ada pelanggaran mayor terdeteksi.</li>';
+        }
+
+        if (result.consultant_recommendations && result.consultant_recommendations.length > 0) {
+            result.consultant_recommendations.forEach(r => {
+                const li = document.createElement('li'); li.innerText = r; li.style.marginBottom = '4px';
+                rList.appendChild(li);
+            });
+        } else {
+            rList.innerHTML = '<li>Lanjutkan dengan proses QA standar.</li>';
+        }
+        
+        extraInsights.style.display = 'flex';
+
         // Render List
         const listEl = document.getElementById('details-list');
         listEl.innerHTML = '';
         
-        result.details.forEach(detail => {
-            const icon = detail.status ? '<span class="icon-check">✓</span>' : '<span class="icon-cross">✗</span>';
-            const li = document.createElement('li');
-            li.innerHTML = `${icon} <div><strong>${detail.item}</strong><br><span style="color:var(--text-muted)">${detail.notes}</span></div>`;
-            listEl.appendChild(li);
-        });
+        if (result.details) {
+            result.details.forEach(detail => {
+                const icon = detail.status ? '<span class="icon-check">✓</span>' : '<span class="icon-cross">✗</span>';
+                const li = document.createElement('li');
+                li.innerHTML = `${icon} <div><strong>${detail.item}</strong><br><span style="color:var(--text-muted)">${detail.notes}</span></div>`;
+                listEl.appendChild(li);
+            });
+        }
     }
 
     // Generate PDF Logic
@@ -498,37 +540,88 @@
         
         doc.line(14, 65, 196, 65);
         
-        // Details
         let yPos = 75;
-        doc.setFontSize(12);
         
-        lastResult.details.forEach((item, index) => {
-            if (yPos > 270) {
-                doc.addPage();
-                yPos = 20;
-            }
-            
+        // Pelanggaran Regulasi
+        if(lastResult.violations && lastResult.violations.length > 0) {
+            doc.setFontSize(12);
+            doc.setTextColor(220, 38, 38);
             doc.setFont("helvetica", "bold");
-            if (item.status) {
-                doc.setTextColor(34, 197, 94); // Success green
-                doc.text(`[LULUS]`, 14, yPos);
-            } else {
-                doc.setTextColor(239, 68, 68); // Danger red
-                doc.text(`[GAGAL]`, 14, yPos);
-            }
-            
-            doc.setTextColor(30, 41, 59);
-            doc.text(`${index + 1}. ${item.item}`, 35, yPos);
+            doc.text("PELANGGARAN REGULASI:", 14, yPos);
+            yPos += 8;
             
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
-            doc.setTextColor(100, 116, 139);
+            doc.setTextColor(30, 41, 59);
             
-            const splitNotes = doc.splitTextToSize(`Catatan: ${item.notes}`, 160);
-            doc.text(splitNotes, 35, yPos + 6);
+            lastResult.violations.forEach(v => {
+                const textLines = doc.splitTextToSize(`- ${v}`, 180);
+                doc.text(textLines, 14, yPos);
+                yPos += (textLines.length * 5) + 2;
+                if(yPos > 270) { doc.addPage(); yPos = 20; }
+            });
+            yPos += 5;
+        }
+
+        // Rekomendasi Konsultan
+        if(lastResult.consultant_recommendations && lastResult.consultant_recommendations.length > 0) {
+            if(yPos > 250) { doc.addPage(); yPos = 20; }
+            doc.setFontSize(12);
+            doc.setTextColor(15, 118, 110);
+            doc.setFont("helvetica", "bold");
+            doc.text("REKOMENDASI KONSULTAN BISNIS:", 14, yPos);
+            yPos += 8;
             
-            yPos += 12 + (splitNotes.length * 5);
-        });
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 41, 59);
+            
+            lastResult.consultant_recommendations.forEach(r => {
+                const textLines = doc.splitTextToSize(`- ${r}`, 180);
+                doc.text(textLines, 14, yPos);
+                yPos += (textLines.length * 5) + 2;
+                if(yPos > 270) { doc.addPage(); yPos = 20; }
+            });
+            yPos += 10;
+        }
+
+        // Details
+        if(yPos > 260) { doc.addPage(); yPos = 20; }
+        doc.setFontSize(12);
+        doc.setTextColor(30, 41, 59);
+        doc.setFont("helvetica", "bold");
+        doc.text("RINCIAN AUDIT ELEMEN LABEL:", 14, yPos);
+        yPos += 10;
+        
+        if (lastResult.details) {
+            lastResult.details.forEach((item, index) => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setFont("helvetica", "bold");
+                if (item.status) {
+                    doc.setTextColor(34, 197, 94); // Success green
+                    doc.text(`[LULUS]`, 14, yPos);
+                } else {
+                    doc.setTextColor(239, 68, 68); // Danger red
+                    doc.text(`[GAGAL]`, 14, yPos);
+                }
+                
+                doc.setTextColor(30, 41, 59);
+                doc.text(`${index + 1}. ${item.item}`, 35, yPos);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                
+                const splitNotes = doc.splitTextToSize(`Catatan: ${item.notes}`, 160);
+                doc.text(splitNotes, 35, yPos + 6);
+                
+                yPos += 12 + (splitNotes.length * 5);
+            });
+        }
         
         // Footer
         const pageCount = doc.internal.getNumberOfPages();
@@ -536,10 +629,21 @@
             doc.setPage(i);
             doc.setFontSize(8);
             doc.setTextColor(150);
-            doc.text(`Halaman ${i} dari ${pageCount} - Dokumen ini dihasilkan secara otomatis oleh AI.`, 14, 290);
+            doc.text(`Halaman ${i} dari ${pageCount} - Dokumen ini dihasilkan secara otomatis oleh Konsultan AI.`, 14, 290);
         }
         
-        doc.save("Laporan_Kepatuhan_Label.pdf");
+        // Dynamic Filename
+        let prodName = lastResult.product_name || "Label_Pangan";
+        prodName = prodName.replace(/[^a-zA-Z0-9]/g, '_'); // sanitize name
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        
+        const filename = `${prodName}_${y}${m}${d}_${h}${min}.pdf`;
+        doc.save(filename);
     });
 </script>
 </body>
