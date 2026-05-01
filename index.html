@@ -348,9 +348,21 @@
                 </div>
             </div>
 
-            <ul class="details-list" id="details-list">
-                <!-- Data will be injected here by JS -->
-            </ul>
+            <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px;">
+                <table style="width: 100%; border-collapse: collapse; background: white; text-align: left; font-size: 0.85rem;">
+                    <thead style="background: #F8FAFC; border-bottom: 2px solid var(--border);">
+                        <tr>
+                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Status</th>
+                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Elemen</th>
+                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Temuan Audit</th>
+                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Dampak Risiko</th>
+                        </tr>
+                    </thead>
+                    <tbody id="details-table-body">
+                        <!-- Data will be injected here by JS -->
+                    </tbody>
+                </table>
+            </div>
 
             <button class="btn-download" id="btn-download-pdf">
                 📥 Unduh Laporan (PDF)
@@ -363,6 +375,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script>
     // Elements
     const fileInput = document.getElementById('file-input');
@@ -494,16 +507,29 @@
         
         extraInsights.style.display = 'flex';
 
-        // Render List
-        const listEl = document.getElementById('details-list');
-        listEl.innerHTML = '';
+        // Render Table
+        const tbody = document.getElementById('details-table-body');
+        tbody.innerHTML = '';
         
         if (result.details) {
             result.details.forEach(detail => {
-                const icon = detail.status ? '<span class="icon-check">✓</span>' : '<span class="icon-cross">✗</span>';
-                const li = document.createElement('li');
-                li.innerHTML = `${icon} <div><strong>${detail.item}</strong><br><span style="color:var(--text-muted)">${detail.notes}</span></div>`;
-                listEl.appendChild(li);
+                const isCompliant = detail.status === 'COMPLIANT';
+                const badgeBg = isCompliant ? '#DCFCE7' : '#FEE2E2';
+                const badgeColor = isCompliant ? '#166534' : '#991B1B';
+                const badgeIcon = isCompliant ? '🟢' : '🔴';
+                const badgeText = isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT';
+                
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                tr.innerHTML = `
+                    <td style="padding: 12px; vertical-align: top;">
+                        <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; white-space: nowrap;">${badgeIcon} ${badgeText}</span>
+                    </td>
+                    <td style="padding: 12px; vertical-align: top; font-weight: 600; color: var(--text-main);">${detail.element || detail.item || ''}</td>
+                    <td style="padding: 12px; vertical-align: top; color: var(--text-muted);">${detail.finding || detail.notes || ''}</td>
+                    <td style="padding: 12px; vertical-align: top; color: #991B1B; font-weight: 600;">${detail.risk_impact || '-'}</td>
+                `;
+                tbody.appendChild(tr);
             });
         }
     }
@@ -585,41 +611,39 @@
             yPos += 10;
         }
 
-        // Details
-        if(yPos > 260) { doc.addPage(); yPos = 20; }
-        doc.setFontSize(12);
-        doc.setTextColor(30, 41, 59);
-        doc.setFont("helvetica", "bold");
-        doc.text("RINCIAN AUDIT ELEMEN LABEL:", 14, yPos);
-        yPos += 10;
-        
-        if (lastResult.details) {
-            lastResult.details.forEach((item, index) => {
-                if (yPos > 270) {
-                    doc.addPage();
-                    yPos = 20;
+        // Details Table using jsPDF-AutoTable
+        if(lastResult.details) {
+            const tableData = lastResult.details.map(detail => [
+                (detail.status === 'COMPLIANT' ? 'PASS' : 'FAIL'),
+                detail.element || detail.item || '',
+                detail.finding || detail.notes || '',
+                detail.risk_impact || '-'
+            ]);
+            
+            doc.autoTable({
+                startY: yPos + 5,
+                head: [['Status', 'Elemen', 'Temuan Audit', 'Dampak Risiko']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255] },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: {
+                    0: { cellWidth: 20, fontStyle: 'bold' },
+                    1: { cellWidth: 40, fontStyle: 'bold' },
+                    2: { cellWidth: 80 },
+                    3: { cellWidth: 40, textColor: [153, 27, 27] }
+                },
+                didParseCell: function (data) {
+                    if (data.section === 'body' && data.column.index === 0) {
+                        if (data.cell.raw === 'PASS') {
+                            data.cell.styles.textColor = [22, 101, 52];
+                            data.cell.styles.fillColor = [220, 252, 231];
+                        } else {
+                            data.cell.styles.textColor = [153, 27, 27];
+                            data.cell.styles.fillColor = [254, 226, 226];
+                        }
+                    }
                 }
-                
-                doc.setFont("helvetica", "bold");
-                if (item.status) {
-                    doc.setTextColor(34, 197, 94); // Success green
-                    doc.text(`[LULUS]`, 14, yPos);
-                } else {
-                    doc.setTextColor(239, 68, 68); // Danger red
-                    doc.text(`[GAGAL]`, 14, yPos);
-                }
-                
-                doc.setTextColor(30, 41, 59);
-                doc.text(`${index + 1}. ${item.item}`, 35, yPos);
-                
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                
-                const splitNotes = doc.splitTextToSize(`Catatan: ${item.notes}`, 160);
-                doc.text(splitNotes, 35, yPos + 6);
-                
-                yPos += 12 + (splitNotes.length * 5);
             });
         }
         
@@ -628,8 +652,8 @@
         for(let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
             doc.setFontSize(8);
-            doc.setTextColor(150);
-            doc.text(`Halaman ${i} dari ${pageCount} - Dokumen ini dihasilkan secara otomatis oleh Konsultan AI.`, 14, 290);
+            doc.setTextColor(100);
+            doc.text(`Halaman ${i} dari ${pageCount} - Laporan Rahasia (Confidential) | Diterbitkan oleh: Konsultan Eksekutif Kepatuhan Korporasi`, 14, 290);
         }
         
         // Dynamic Filename
