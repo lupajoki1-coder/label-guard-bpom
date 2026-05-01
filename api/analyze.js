@@ -3,7 +3,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
     
-    const { images } = req.body;
+    const { images, manualHalal } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -14,11 +14,15 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Gambar tidak ditemukan dalam request.' });
     }
 
+    const halalContext = manualHalal 
+        ? `Catatan Khusus Halal: Pengguna telah menginput nomor sertifikat halal secara manual: "${manualHalal}". Evaluasi nomor ini. Jika formatnya tidak sesuai standar BPJPH (harus diawali 'ID' diikuti angka panjang), catat sebagai pelanggaran. Jika sesuai, catat nomor tersebut pada field 'halal_cert_number' di JSON.`
+        : `Penting untuk Halal: Wajib cek keberadaan Logo Halal Indonesia (ungu/hijau) yang sah dan format nomor sertifikat (contoh: ID123...). Jika nomor tidak jelas/salah di foto, jadikan pelanggaran.`;
+
     const prompt = `Anda adalah Executive Consultant di bidang Regulatory Affairs & Corporate Compliance.
 Fokus audit Anda: Kepatuhan label pangan olahan berdasarkan regulasi terkini BPOM dan Sertifikasi Halal BPJPH (Khususnya Kepkaban BPJPH No 78 Tahun 2023 dan Surat Edaran No 7 Tahun 2025).
-Pengguna akan melampirkan BEBERAPA FOTO dari SATU PRODUK yang sama. Analisis semuanya sebagai kesatuan.
-Lakukan audit zero-tolerance yang SANGAT RINGKAS dan PADAT DATA. Jangan berikan rincian tabel elemen panjang. Fokus HANYA pada tingkat kepatuhan, daftar pelanggaran yang kritis, serta rekomendasi. Wajib menyebutkan referensi regulasi (misal: PerBPOM 31/2018, SE BPJPH No 7/2025) di setiap pelanggaran dan rekomendasi.
-Penting untuk Halal: Wajib cek keberadaan Logo Halal Indonesia (ungu/hijau) yang sah dan format nomor sertifikat (contoh: ID1234...). Jika nomor tidak jelas/salah, jadikan pelanggaran.
+Pengguna melampirkan MULTIPLE FOTO dari SATU produk. Secara cerdas, rangkai dan gabungkan informasi dari seluruh sisi foto (depan, belakang, dsb) menjadi satu kesatuan audit.
+Lakukan audit zero-tolerance yang SANGAT RINGKAS dan PADAT DATA. Jangan berikan rincian tabel elemen panjang. Fokus HANYA pada tingkat kepatuhan, daftar pelanggaran kritis, serta rekomendasi. Wajib menyebutkan referensi regulasi (misal: PerBPOM 31/2018, SE BPJPH No 7/2025).
+${halalContext}
 
 KEMBALIKAN HANYA JSON MURNI (tanpa markdown \`\`\`json) dengan struktur:
 {
