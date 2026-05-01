@@ -1,0 +1,49 @@
+PANDUAN TEKNIS ORKESTRASI & DEPLOYMENT - LABELGUARD AI (UPDATE VERCEL SERVERLESS)
+===========================================================================
+
+Sesuai permintaan Anda, aplikasi kini telah diubah arsitekturnya. Pengguna tidak perlu lagi memasukkan API Key secara manual, dan Gemini API Key Anda akan tersimpan sangat aman (tersembunyi) di dalam environment Vercel.
+
+Berikut adalah panduan orkestrasi dan deployment terbarunya:
+
+1. STRUKTUR FOLDER & FILE
+--------------------------------------------------
+Pastikan folder kerja Anda memiliki struktur seperti ini saat di-upload ke GitHub:
+
+LabelGuard-BPOM/
+├── index.html            <-- Tampilan utama aplikasi (UI/UX)
+├── panduan_orkestrasi.txt
+└── api/
+    └── analyze.js        <-- Vercel Serverless Function (Menyembunyikan API Key)
+
+2. VERSI KONTROL (GITHUB)
+--------------------------------------------------
+a. Buka github.com dan buat Repository baru (misal: "labelguard-bpom-secure").
+b. Unggah semua file di atas secara utuh (termasuk folder `api`).
+c. Commit perubahannya.
+
+3. DEPLOYMENT (VERCEL) & PENGATURAN API KEY AMAN
+--------------------------------------------------
+a. Buka vercel.com dan login dengan akun GitHub Anda.
+b. Klik "Add New Project" dan pilih repository "labelguard-bpom-secure".
+c. Pada bagian "Framework Preset", biarkan sebagai "Other".
+d. **SANGAT PENTING**: Buka bagian "Environment Variables" (sebelum klik Deploy).
+e. Tambahkan variable berikut:
+   - Name:  GEMINI_API_KEY
+   - Value: (Masukkan token API Gemini Anda yang sebenarnya, misal: AIzaSyB...)
+f. Klik tombol "Add".
+g. Setelah itu, barulah klik tombol "Deploy".
+
+4. BAGAIMANA INI BEKERJA? (ARSITEKTUR KEAMANAN)
+--------------------------------------------------
+- **Frontend (index.html):** Hanya mengurus tampilan, kamera, tombol, dan PDF. Tidak ada kunci API di sini. Jika orang iseng mengecek kode di browser, mereka tidak akan menemukan token Anda.
+- **Backend (api/analyze.js):** Saat pengguna menekan tombol "Analisis", foto dikirim ke alamat tersembunyi (`/api/analyze`) milik Vercel. Di dalam server Vercel, kode ini akan mengambil foto, menempelkannya dengan `GEMINI_API_KEY` rahasia Anda, mengirimkannya ke Google, lalu mengembalikan hasilnya ke HP pengguna.
+
+5. CARA PENGGUNAAN (END-USER)
+--------------------------------------------------
+a. Bagikan URL Vercel (misal: labelguard-bpom-secure.vercel.app) kepada pengguna.
+b. Pengguna cukup membuka web tersebut, mengklik "Ambil Foto Langsung", memfoto label pangan.
+c. Klik "Analisis Label Sekarang".
+d. Hasil skor dan rincian kepatuhan akan muncul secara otomatis tanpa hambatan!
+e. Pengguna bisa langsung mengunduh hasil dalam bentuk PDF.
+
+Selamat, aplikasi Anda kini berstandar profesional, sangat mudah digunakan oleh *end-user*, dan 100% aman!
