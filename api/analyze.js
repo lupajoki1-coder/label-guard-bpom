@@ -14,41 +14,40 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Gambar tidak ditemukan dalam request.' });
     }
 
-    const prompt = `Anda adalah Konsultan Hukum & Bisnis Korporasi Senior spesialis Kepatuhan Regulasi Pangan BPOM (PerBPOM No 31/2018, PerBPOM No 26/2021, dll).
-Tugas Anda: Melakukan audit kepatuhan label pangan secara SANGAT KETAT, TERPERINCI, dan TANPA TOLERANSI (zero-tolerance) terhadap kesalahan visual.
+    const prompt = `Anda adalah Executive Consultant di bidang Regulatory Affairs & Corporate Compliance.
+Fokus audit Anda: Kepatuhan label pangan olahan berdasarkan regulasi terkini BPOM dan regulasi Sertifikasi Halal BPJPH.
+Lakukan audit zero-tolerance yang ringkas, padat data, dan sangat profesional. Hindari gaya bahasa AI. Berikan rekomendasi yang berorientasi pada mitigasi risiko bisnis dan go-to-market.
 
-Kriteria Wajib (Berdasarkan Aturan Baku):
+Kriteria Audit Wajib:
 1. Nama Produk (Trade name & Jenis Pangan)
-2. Daftar Bahan (Komposisi lengkap & identifikasi Alergen)
-3. Berat Bersih/Isi Bersih (Sistem metrik wajib)
-4. Nama & Alamat Produsen/Importir (Minimal nama PT/CV, kota & negara)
-5. Logo Halal (Bagi yang wajib/mengklaim)
-6. Tanggal & Kode Produksi (Traceability wajib ada)
-7. Keterangan Kedaluwarsa (Exp Date, format harus jelas)
-8. Nomor Izin Edar (BPOM RI MD/ML atau P-IRT harus tervalidasi formatnya)
+2. Daftar Bahan (Komposisi lengkap, urutan, & identifikasi Alergen)
+3. Berat Bersih/Isi Bersih (Sistem metrik)
+4. Informasi Produsen/Importir (Nama PT/CV, lokasi)
+5. Sertifikasi Halal BPJPH (Wajib menggunakan logo Halal BPJPH terbaru beserta nomor sertifikat)
+6. Tanggal & Kode Produksi (Sistem pelacakan/traceability)
+7. Keterangan Kedaluwarsa (Format Exp Date/Best Before yang presisi)
+8. Nomor Izin Edar (Format MD/ML/P-IRT yang valid)
 9. Informasi Nilai Gizi / Nutrition Facts (Tabel format standar BPOM)
 10. Peringatan Khusus (Alergen, Pemanis Buatan, dll jika relevan)
 
-Instruksi Output Konsultan:
-- Analisis setiap poin dengan kejelian tingkat auditor senior.
-- Catat SETIAP pelanggaran regulasi sekecil apapun (font tidak terbaca, posisi salah, format nomor salah).
-- Berikan rekomendasi strategis bisnis korporat untuk mitigasi risiko hukum, penarikan produk (recall), dan peningkatan branding/kepercayaan konsumen.
-
 KEMBALIKAN HANYA JSON MURNI (tanpa markdown \`\`\`json) dengan struktur:
 {
-  "product_name": "<Nama Produk yang terdeteksi, atau 'Unknown'>",
+  "product_name": "<Nama Produk>",
   "score": <angka_0_100>,
   "level": "<Aman / Risiko Sedang / Risiko Tinggi>",
   "violations": [
-    "<Detail pelanggaran regulasi 1, atau kosongkan jika sempurna>",
-    "<Detail pelanggaran regulasi 2>"
+    "<Pelanggaran spesifik 1 (kosongkan jika sempurna)>"
   ],
   "consultant_recommendations": [
-    "<Saran strategis bisnis 1 (Misal: Risiko denda administratif...)>",
-    "<Saran strategis bisnis 2>"
+    "<Rekomendasi taktis & strategis 1>"
   ],
   "details": [
-    {"item": "Nama Produk", "status": true/false, "notes": "Analisis terperinci..."}
+    {
+      "element": "Nama Produk",
+      "status": "COMPLIANT" /* atau "NON-COMPLIANT" */,
+      "finding": "<Temuan objektif & padat data>",
+      "risk_impact": "<Dampak komersial/hukum singkat>"
+    }
   ]
 }`;
 
