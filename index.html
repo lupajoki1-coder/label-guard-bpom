@@ -305,16 +305,21 @@
             </button>
 
             <!-- Inputs (Hidden) -->
-            <input type="file" id="file-input" accept="image/*">
+            <input type="file" id="file-input" accept="image/*" multiple>
             <!-- Capture attribute opens the camera directly on mobile -->
-            <input type="file" id="camera-input" accept="image/*" capture="environment">
+            <input type="file" id="camera-input" accept="image/*" capture="environment" multiple>
         </div>
 
         <!-- Image Preview Area -->
         <div id="image-preview-container">
-            <button id="remove-image">✕</button>
-            <img id="image-preview" src="" alt="Preview">
-            <button class="upload-btn" id="btn-analyze" style="margin: 16px; width: calc(100% - 32px);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border);">
+                <h4 style="font-size: 0.9rem; color: var(--text-main);">Foto Terpilih</h4>
+                <button id="remove-image" style="background: none; border: none; color: var(--danger); font-weight: 600; cursor: pointer; font-size: 0.85rem;">Hapus Semua</button>
+            </div>
+            <div id="preview-gallery" style="display: flex; gap: 8px; overflow-x: auto; padding: 16px; scroll-snap-type: x mandatory;">
+                <!-- Thumbnails go here -->
+            </div>
+            <button class="upload-btn" id="btn-analyze" style="margin: 0 16px 16px 16px; width: calc(100% - 32px);">
                 🔍 Analisis Label Sekarang
             </button>
         </div>
@@ -353,21 +358,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px;">
-                <table style="width: 100%; border-collapse: collapse; background: white; text-align: left; font-size: 0.85rem;">
-                    <thead style="background: #F8FAFC; border-bottom: 2px solid var(--border);">
-                        <tr>
-                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Status</th>
-                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Elemen</th>
-                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Temuan Audit</th>
-                            <th style="padding: 12px; color: var(--text-muted); font-weight: 600;">Dampak Risiko</th>
-                        </tr>
-                    </thead>
-                    <tbody id="details-table-body">
-                        <!-- Data will be injected here by JS -->
-                    </tbody>
-                </table>
-            </div>
+            <!-- Rincian tabel dihapus agar laporan lebih ringkas sesuai permintaan -->
 
             <button class="btn-download" id="btn-download-pdf">
                 📥 Unduh Laporan (PDF)
@@ -387,53 +378,68 @@
     const cameraInput = document.getElementById('camera-input');
     const uploadArea = document.getElementById('upload-area');
     const previewContainer = document.getElementById('image-preview-container');
-    const imagePreview = document.getElementById('image-preview');
+    const previewGallery = document.getElementById('preview-gallery');
     const removeImageBtn = document.getElementById('remove-image');
     const btnAnalyze = document.getElementById('btn-analyze');
     const loadingState = document.getElementById('loading-state');
     const resultsSection = document.getElementById('results-section');
     const btnReset = document.getElementById('btn-reset');
 
-    let currentBase64Image = null;
+    let currentImages = []; // Array of { dataUrl, base64 }
     let lastResult = null;
 
     // Handle File Selection
-    const handleFileSelect = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                imagePreview.src = e.target.result;
-                currentBase64Image = e.target.result.split(',')[1]; // Get base64 data only
-                uploadArea.style.display = 'none';
-                previewContainer.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+    const handleFileSelect = async (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length > 0) {
+            uploadArea.style.display = 'none';
+            previewContainer.style.display = 'block';
+            
+            for(let file of files) {
+                const dataUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+                
+                const base64 = dataUrl.split(',')[1];
+                currentImages.push({ dataUrl, base64 });
+                
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.scrollSnapAlign = 'start';
+                img.style.flexShrink = '0';
+                previewGallery.appendChild(img);
+            }
         }
     };
 
     fileInput.addEventListener('change', handleFileSelect);
     cameraInput.addEventListener('change', handleFileSelect);
 
-    removeImageBtn.addEventListener('click', () => {
+    const resetInputs = () => {
         uploadArea.style.display = 'flex';
         previewContainer.style.display = 'none';
-        imagePreview.src = '';
-        currentBase64Image = null;
+        previewGallery.innerHTML = '';
+        currentImages = [];
         fileInput.value = '';
         cameraInput.value = '';
-    });
+    }
+
+    removeImageBtn.addEventListener('click', resetInputs);
 
     btnReset.addEventListener('click', () => {
         resultsSection.style.display = 'none';
-        uploadArea.style.display = 'flex';
-        imagePreview.src = '';
-        currentBase64Image = null;
+        resetInputs();
     });
 
     // Analyze Label with Vercel Serverless Function
     btnAnalyze.addEventListener('click', async () => {
-        if (!currentBase64Image) {
+        if (currentImages.length === 0) {
             alert('Silakan unggah atau ambil foto label terlebih dahulu.');
             return;
         }
@@ -442,13 +448,14 @@
         loadingState.style.display = 'flex';
 
         try {
+            const base64Array = currentImages.map(img => img.base64);
             const response = await fetch(`/api/analyze`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    image: currentBase64Image
+                    images: base64Array
                 })
             });
 
@@ -485,7 +492,9 @@
         document.querySelector('.score-circle').style.background = `conic-gradient(${color} ${result.score}%, #E2E8F0 0)`;
         
         // Set Thumbnail
-        document.getElementById('result-thumbnail').src = imagePreview.src;
+        if (currentImages.length > 0) {
+            document.getElementById('result-thumbnail').src = currentImages[0].dataUrl;
+        }
 
         // Render Violations & Recommendations
         const extraInsights = document.getElementById('extra-insights');
@@ -515,31 +524,6 @@
         
         extraInsights.style.display = 'flex';
 
-        // Render Table
-        const tbody = document.getElementById('details-table-body');
-        tbody.innerHTML = '';
-        
-        if (result.details) {
-            result.details.forEach(detail => {
-                const isCompliant = detail.status === 'COMPLIANT';
-                const badgeBg = isCompliant ? '#DCFCE7' : '#FEE2E2';
-                const badgeColor = isCompliant ? '#166534' : '#991B1B';
-                const badgeIcon = isCompliant ? '🟢' : '🔴';
-                const badgeText = isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT';
-                
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid var(--border)';
-                tr.innerHTML = `
-                    <td style="padding: 12px; vertical-align: top;">
-                        <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; white-space: nowrap;">${badgeIcon} ${badgeText}</span>
-                    </td>
-                    <td style="padding: 12px; vertical-align: top; font-weight: 600; color: var(--text-main);">${detail.element || detail.item || ''}</td>
-                    <td style="padding: 12px; vertical-align: top; color: var(--text-muted);">${detail.finding || detail.notes || ''}</td>
-                    <td style="padding: 12px; vertical-align: top; color: #991B1B; font-weight: 600;">${detail.risk_impact || '-'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
     }
 
     // Generate PDF Logic
@@ -562,8 +546,10 @@
         doc.text("Penerbit: Divisi Kepatuhan Regulasi Internal", 14, 32);
         
         try {
-            // Attempt to embed the preview image, keep it small (30x30)
-            doc.addImage(imagePreview.src, 'JPEG', 165, 12, 30, 30);
+            if (currentImages.length > 0) {
+                // Attempt to embed the preview image, keep it small (30x30)
+                doc.addImage(currentImages[0].dataUrl, 'JPEG', 165, 12, 30, 30);
+            }
         } catch(e) {
             console.log("Gambar gagal dirender ke PDF");
         }
@@ -626,41 +612,7 @@
             yPos += 10;
         }
 
-        // Details Table using jsPDF-AutoTable
-        if(lastResult.details) {
-            const tableData = lastResult.details.map(detail => [
-                (detail.status === 'COMPLIANT' ? 'PASS' : 'FAIL'),
-                detail.element || detail.item || '',
-                detail.finding || detail.notes || '',
-                detail.risk_impact || '-'
-            ]);
-            
-            doc.autoTable({
-                startY: yPos + 5,
-                head: [['Status', 'Elemen', 'Temuan Audit', 'Dampak Risiko']],
-                body: tableData,
-                theme: 'grid',
-                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255] },
-                alternateRowStyles: { fillColor: [248, 250, 252] },
-                columnStyles: {
-                    0: { cellWidth: 20, fontStyle: 'bold' },
-                    1: { cellWidth: 40, fontStyle: 'bold' },
-                    2: { cellWidth: 80 },
-                    3: { cellWidth: 40, textColor: [153, 27, 27] }
-                },
-                didParseCell: function (data) {
-                    if (data.section === 'body' && data.column.index === 0) {
-                        if (data.cell.raw === 'PASS') {
-                            data.cell.styles.textColor = [22, 101, 52];
-                            data.cell.styles.fillColor = [220, 252, 231];
-                        } else {
-                            data.cell.styles.textColor = [153, 27, 27];
-                            data.cell.styles.fillColor = [254, 226, 226];
-                        }
-                    }
-                }
-            });
-        }
+        // Tabel rincian dihapus agar laporan sangat ringkas
         
         // Footer
         const pageCount = doc.internal.getNumberOfPages();
