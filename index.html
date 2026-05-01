@@ -322,6 +322,14 @@
             <div id="preview-gallery" style="display: flex; gap: 8px; overflow-x: auto; padding: 16px; scroll-snap-type: x mandatory;">
                 <!-- Thumbnails go here -->
             </div>
+            
+            <!-- Input Halal Manual -->
+            <div style="padding: 0 16px 16px 16px;">
+                <label for="manual-halal-input" style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: block;">🔍 Input Nomor Halal (Opsional)</label>
+                <input type="text" id="manual-halal-input" placeholder="Contoh: ID123456789..." style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; transition: border 0.3s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">Ketik manual jika nomor pada kemasan buram. AI akan merangkai datanya secara cerdas.</p>
+            </div>
+
             <button class="upload-btn" id="btn-analyze" style="margin: 0 16px 16px 16px; width: calc(100% - 32px);">
                 🔍 Analisis Label Sekarang
             </button>
@@ -449,6 +457,7 @@
         currentImages = [];
         fileInput.value = '';
         cameraInput.value = '';
+        document.getElementById('manual-halal-input').value = '';
     }
 
     removeImageBtn.addEventListener('click', resetInputs);
@@ -473,6 +482,7 @@
         loadingState.style.display = 'flex';
 
         try {
+            const manualHalal = document.getElementById('manual-halal-input').value.trim();
             const base64Array = currentImages.map(img => img.base64);
             const response = await fetch(`/api/analyze`, {
                 method: 'POST',
@@ -480,7 +490,8 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    images: base64Array
+                    images: base64Array,
+                    manualHalal: manualHalal
                 })
             });
 
